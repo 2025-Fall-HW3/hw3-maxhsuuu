@@ -70,14 +70,33 @@ class MyPortfolio:
         """
         TODO: Complete Task 4 Below
         """
-        
-        
+
+        # 1. 對每一檔（不含 SPY）計算整段期間的 Sharpe ratio
+        sharpe_dict = {}
+        for col in assets:
+            # quantstats.stats.sharpe 對 Series 會回傳一個 scalar
+            s = qs.stats.sharpe(self.returns[col])
+            # 避免 NaN 影響 max，比方說某檔資料很短
+            if np.isnan(s):
+                s = -np.inf
+            sharpe_dict[col] = s
+
+        # 2. 找出 Sharpe 最高的那一檔 ETF
+        best_asset = max(sharpe_dict, key=sharpe_dict.get)
+
+        # 3. 權重設定：
+        #    全程 100% 押在 Sharpe 最高的那一檔，其它和 SPY 都是 0
+        self.portfolio_weights.loc[:, :] = 0.0
+        self.portfolio_weights[best_asset] = 1.0
+        self.portfolio_weights[self.exclude] = 0.0
+
         """
         TODO: Complete Task 4 Above
         """
 
         self.portfolio_weights.ffill(inplace=True)
         self.portfolio_weights.fillna(0, inplace=True)
+
 
     def calculate_portfolio_returns(self):
         # Ensure weights are calculated
